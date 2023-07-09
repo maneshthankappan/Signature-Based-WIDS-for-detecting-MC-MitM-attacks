@@ -1,3 +1,9 @@
+# Signature-Based-WIDS-for-detecting-MC-MitM-attacks
+# Copyright (c) 2023, Manesh Thankappan<mthankappan@uoc.edu>
+#
+# This code may be distributed under the terms of the BSD license.
+# See README for more details.
+
 from impacket.dot11 import Dot11
 from scapy.all import *
 from time import sleep
