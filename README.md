@@ -26,18 +26,8 @@ scapy
 This should start the Scapy interactive shell if the installation was successful.
 
 ## Prerequisite-Attach Wi-Fi adapters
-Attach any two commercially available Wi-Fi adapters. We use TP-Link WN722N v3 (High Gain) Wi-Fi adapters for 2.4 Ghz and Wi-Fi Nation for 5GHz channels.
+Attach any two commercially available Wi-Fi adapters. One is used to monitor taget AP;s channel and other is used to observe retransmission of frames (as part of MC-MitM) in any other channels other than AP's channel. We use TP-Link WN722N v3 (High Gain) Wi-Fi adapters for 2.4 Ghz and Wi-Fi Nation for 5GHz channels. Please note that only one frequency can be monitored at a time. Ensure that both Wi-Fi adapters are physically connected to your system before proceeding.
 
-## Prerequisite-Install RF-kill
-
-*Before doing any attacks it is recommended to disable WiFi.* In particular I mean disabling WiFi in your network manager. Most graphical network managers have an option somewhere named "Enable Wi-Fi". Make sure it's not selected. If you can't find it, perhaps you can disable in the terminal with `sudo nmcli nm wifi off`. Once you have disabled WiFi your OS won't interfere with our attacks.
-
-*If RF-kill is enabled* we'll have to turn it off. Some distributions set RF-kill on after disabling WiFi. But we still want to actually use our WiFi devices. So execute:
-
-```bash
-sudo apt-get install rfkill
-sudo rfkill unblock wifi
-```
 ## Quick Start
 
 From this repository, download all the 3 files (SWIDS.py,mc-mitm-detection-asyncsniffer_centralized.py, and macaddresses.json) and keep all of them in a same folder. Alternatively you can download SWIDS.tar.gz. 
@@ -59,7 +49,11 @@ In the terminal, write
 ```bash
 sudo python3 SWIDS.py
 ```
-### Sample output
+After executing this SWIDS.py, we launch various MC-MitM attack variants. 
+[Click here how to launch MC-MitM base variant] (https://github.com/maneshthankappan/Multi-Channel-Man-in-the-Middle-Attacks-Against-Protected-Wi-Fi-Networks-By-Base-Variant-) 
+[Click here how to launch MC-MitM improved variant] (https://github.com/maneshthankappan/Multi-Channel-Man-in-the-Middle-Attacks-Against-Protected-Wi-Fi-Networks-By-Improved-Variant) 
+
+### Sample output snippet
 ```bash
 SWIDS is active.........
 0. wlan1
@@ -88,12 +82,11 @@ Clients Connected
 ------------------------------------------
 1. 4C:53:FD:49:34:E3 - Amazon Technologies Inc.
 2. 24:18:1D:2D:58:DB - SAMSUNG ELECTRO-MECHANICS(THAILAND)
-3. 92:F3:0F:D5:40:1B - Unknown vendor
+3. 92:F3:0F:D5:40:1B - Apple, Inc.
 4. D0:37:45:81:9A:68 - TP-LINK TECHNOLOGIES CO.,LTD.
 5. 74:23:44:AA:DC:B9 - Xiaomi Communications Co Ltd
-6. 42:EB:6B:65:43:EA - Unknown vendor
-7. 8C:29:37:AD:7B:49 - Apple, Inc.
-8. 8C:F5:A3:08:16:63 - SAMSUNG ELECTRO-MECHANICS(THAILAND)
+6. 8C:29:37:AD:7B:49 - Apple, Inc.
+7. 8C:F5:A3:08:16:63 - SAMSUNG ELECTRO-MECHANICS(THAILAND)
 ------------------------------------------
 Starting MC-MitM Detection
 ---------------------------------------------------------
@@ -178,3 +171,9 @@ Elapsed time is  1.01 Minutes
 ---------------------------------------------------------
 Probe interval number 9 started at 2023-07-08 19:52:48.977689
 ```
+### Ongoing works
+This SWIDS implementation is a prototype designed to work on a Kali Linux system. It aims to provide detection of MC-MitM attacks. However, we are currently improving our system to incorporate distributed detection capabilities.
+
+In addition, we are developing a user-friendly GUI for the SWIDS and planning to package it as a plugin for smart home domotics platforms such as OpenHAB or Home Assistant, which are working on Raspberry Pis. This will allow users to easily integrate our detection system into their smart home environments and enhance security against MC-MitM attacks.
+
+By offering a GUI and integration as a plugin, we aim to provide a seamless experience for users to monitor and protect their smart homes, enabling them to leverage the capabilities of our SWIDS within their existing home automation frameworks.
