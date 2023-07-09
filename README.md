@@ -55,6 +55,8 @@ After executing this SWIDS.py, we launch various MC-MitM attack variants.
 
 
 ### Sample output snippet
+We provide a sample output snippet from the logfile of our SWIDS
+
 ```bash
 SWIDS is active.........
 0. wlan1
