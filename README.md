@@ -32,13 +32,13 @@ Attach any two commercially available Wi-Fi adapters. One is used to monitor tag
 
 From this repository, download all the 3 files (SWIDS.py,mc-mitm-detection-asyncsniffer_centralized.py, and macaddresses.json) and keep all of them in a same folder. Alternatively you can download SWIDS.tar.gz. 
 ### Description of Python Scripts
-##### SWIDS.py: 
+* ##### SWIDS.py: 
 The following script prompts the user to select a Wi-Fi card, specify the Wi-Fi frequency (2.4GHz/5GHz), and provide the SSID of the target access point (AP) in the Wi-Fi network. It then automatically identifies all clients connected to the AP and forwards their MAC addresses along with the AP's MAC address to the "mc-mitm-detection-asyncsniffer_centralized.py" script.
 
 Make sure you have the "mc-mitm-detection-asyncsniffer_centralized.py" script in the same directory, or provide the full path to the script if it's located elsewhere. This script will pass the selected Wi-Fi card, Wi-Fi frequency, and SSID as command-line arguments to the "mc-mitm-detection-asyncsniffer_centralized.py" script, which will handle the further processing.
-##### macaddresses.json:
+* ##### macaddresses.json:
 This file is utilized by the "SWIDS.py" script to retrieve the vendor details of connected clients by using their MAC addresses.
-##### mc-mitm-detection-asyncsniffer_centralized.py: 
+* ##### mc-mitm-detection-asyncsniffer_centralized.py: 
 This script combines various detection logic discussed in Section 5 of our paper with the algorithms presented in Appendix 1. Its main purpose is to identify the presence of MC-MitM attacks by verifying the status of stage 1 and stage 2 attacks based on attack signatures. For more detailed information, please refer to Section 3 of our paper.
 
 The script is designed to be executed with a probe interval of 60 seconds. After the first probe interval, the same script will be executed in another thread with a delay of 10 seconds. This approach ensures continuous monitoring, allowing the SWIDS to make attack decisions every 10 seconds after the initial probe interval.
