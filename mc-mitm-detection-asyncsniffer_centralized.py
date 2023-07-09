@@ -9,8 +9,7 @@ import datetime
 import statistics
 import sys
 
-
-logfile = open("logfile.txt", "a")
+logfile = open("logfile.txt", "a") # Logfile of SWIDS
 
 # counter variables
 cnt0: int = 0
@@ -30,7 +29,7 @@ bcfc: int = 0  # beacon count on fake channel
 
 pccc: int = 0  # probe response count on current channel
 pcfc: int = 0  # probe response on fake channel
-
+mf_rate: int = 0
 r_flag = True
 start = time()
 start_datetime = datetime.datetime.now()
@@ -51,8 +50,9 @@ csa_attack = 0
 con_beacon_probe = 0
 con_connection_est = 0
 con_data = 0
-stage_1_attack_traffic = 0
-stage_2_attack_traffic = 0
+stage_1_attack_traffic = 0  # by default 0 represents false. Later in the program, if the value changes to 1,
+# represents True
+stage_2_attack_traffic = 0  # same as above
 num = 10000  # No. of packets to be captured
 
 today = datetime.datetime.now()
@@ -63,9 +63,11 @@ beacon = 0  # beacon counter for counting beacons during constant jamming attack
 iface1 = sys.argv[5]
 iface2 = sys.argv[6]
 
+
 # Stage 1 traffic analysis
 def constant_jamming():
     global constant_jamming_sniffer
+
     def constant_jamming_callback(frame):  # calculates frame inter-arrival time and counts total beacons received
         global temp, beacon, t
         if frame.haslayer(Dot11Beacon):
@@ -76,30 +78,38 @@ def constant_jamming():
                 t.append(iat)
                 temp = frame.time
                 beacon += 1
-    
-    constant_jamming_sniffer = AsyncSniffer(iface=iface1, count=num, prn=constant_jamming_callback, store=0, monitor=True)
+
+    constant_jamming_sniffer = AsyncSniffer(iface=iface1, count=num, prn=constant_jamming_callback, store=0,
+                                            monitor=True)
     constant_jamming_sniffer.start()
+
 
 constant_jamming_thread = Thread(target=constant_jamming)
 
+
 def reactive_jamming():
     global reactive_jamming_sniffer
+
     def reactive_jamming_callback(frame):  # counts malformed beacons
         global cnt2
         if frame.haslayer(Dot11):
             b_addr = frame[Dot11].addr3
             if b_addr == ap_mac and (frame.haslayer(Dot11Beacon) or frame.haslayer(Dot11ProbeResp)):
                 rl = frame.getlayer(RadioTap)
-                if rl.Flags == "FCS+badFCS":
-                    cnt2 += 1
+                if rl.Flags == "FCS+badFCS":  # Extract FCS flag
+                    cnt2 += 1  # count malformed frames
 
-    reactive_jamming_sniffer = AsyncSniffer(iface=iface1, count=num, prn=reactive_jamming_callback, store=0, monitor=True)
+    reactive_jamming_sniffer = AsyncSniffer(iface=iface1, count=num, prn=reactive_jamming_callback, store=0,
+                                            monitor=True)
     reactive_jamming_sniffer.start()
+
 
 reactive_jamming_thread = Thread(target=reactive_jamming)
 
+
 def channel_switch():
     global channel_switch_sniffer
+
     def channel_switch_callback(frame):  # finds CSA beacons
         global cnt0
         if frame.haslayer(Dot11):
@@ -107,19 +117,22 @@ def channel_switch():
             if b_addr == ap_mac and (frame.haslayer(Dot11Beacon) or frame.haslayer(Dot11ProbeResp)):
                 frame_elt = frame[Dot11Elt]
                 while frame_elt:
-                    if frame_elt.ID == 37:
+                    if frame_elt.ID == 37:  # Extract Channel Switch Announcement Information Element
                         cnt0 += 1
                     frame_elt = frame_elt.payload
 
     channel_switch_sniffer = AsyncSniffer(iface=iface1, count=num, prn=channel_switch_callback, store=0, monitor=True)
     channel_switch_sniffer.start()
 
+
 channel_switch_thread = Thread(target=channel_switch)
+
 
 # Stage 2 traffic analysis
 # Concurrent beacon traffic analysis
 def concurrent_beacon_real():
     global concurrent_beacon_sniffer_real
+
     def concurrent_beacon_real_callback(frame):  # multiple beacon ananlysis for improved variant
         global bccc, bcfc
         if frame.haslayer(Dot11Beacon):
@@ -132,13 +145,17 @@ def concurrent_beacon_real():
             if (bssid == ap_mac or ssid == getssid) and current_channel == 1:
                 bccc += 1
 
-    concurrent_beacon_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_beacon_real_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_beacon_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_beacon_real_callback, store=0,
+                                                  monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_beacon_sniffer_real.start()
+
 
 concurrent_beacon_real_thread = Thread(target=concurrent_beacon_real)
 
+
 def concurrent_beacon_rogue():
     global concurrent_beacon_sniffer_rogue
+
     def concurrent_beacon_rogue_callback(frame):  # multiple beacon analysis for improved variant
         global bccc, bcfc
         if frame.haslayer(Dot11Beacon):
@@ -151,13 +168,17 @@ def concurrent_beacon_rogue():
             if (bssid == ap_mac or ssid == getssid) and current_channel != 1:
                 bcfc += 1
 
-    concurrent_beacon_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_beacon_rogue_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_beacon_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_beacon_rogue_callback,
+                                                   store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_beacon_sniffer_rogue.start()
+
 
 concurrent_beacon_rogue_thread = Thread(target=concurrent_beacon_rogue)
 
+
 def concurrent_probe_resp_real():
     global concurrent_probe_resp_sniffer_real
+
     def concurrent_probe_resp_real_callback(frame):  # multiple probe response ananlysis for improved variant
         global pccc, pcfc
         if frame.haslayer(Dot11ProbeResp):
@@ -170,13 +191,17 @@ def concurrent_probe_resp_real():
             if (bssid == ap_mac or ssid == getssid) and current_channel == 1:
                 pccc += 1
 
-    concurrent_probe_resp_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_probe_resp_real_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_probe_resp_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_probe_resp_real_callback,
+                                                      store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_probe_resp_sniffer_real.start()
+
 
 concurrent_probe_resp_real_thread = Thread(target=concurrent_probe_resp_real)
 
+
 def concurrent_probe_resp_rogue():
     global concurrent_probe_resp_sniffer_rogue
+
     def concurrent_probe_resp_rogue_callback(frame):  # multiple probe response ananlysis for improved variant
         global pccc, pcfc
         if frame.haslayer(Dot11ProbeResp):
@@ -189,15 +214,20 @@ def concurrent_probe_resp_rogue():
             if (bssid == ap_mac or ssid == getssid) and current_channel != 1:
                 pcfc += 1
 
-    concurrent_probe_resp_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_probe_resp_rogue_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_probe_resp_sniffer_rogue = AsyncSniffer(iface=iface2, count=num,
+                                                       prn=concurrent_probe_resp_rogue_callback, store=0,
+                                                       monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_probe_resp_sniffer_rogue.start()
 
+
 concurrent_probe_resp_rogue_thread = Thread(target=concurrent_probe_resp_rogue)
+
 
 # Concurrent auth traffic analysis
 
 def concurrent_auth_real():
     global concurrent_auth_sniffer_real
+
     def concurrent_auth_real_callback(frame):
         global cnt5_auth_seq_real, cnt5_auth_seq_rogue
         if frame.haslayer(Dot11) and frame[Dot11].type == 0 and frame[Dot11].subtype == 11:
@@ -210,13 +240,17 @@ def concurrent_auth_real():
                     d_mac in mac_list)) and current_channel == 1:
                 cnt5_auth_seq_real += 1
 
-    concurrent_auth_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_auth_real_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_auth_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_auth_real_callback, store=0,
+                                                monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_auth_sniffer_real.start()
 
-concurrent_auth_real_thread =  Thread(target=concurrent_auth_real)
+
+concurrent_auth_real_thread = Thread(target=concurrent_auth_real)
+
 
 def concurrent_auth_rogue():
     global concurrent_auth_sniffer_rogue
+
     def concurrent_auth_rogue_callback(frame):
         global cnt5_auth_seq_real, cnt5_auth_seq_rogue
         if frame.haslayer(Dot11) and frame[Dot11].type == 0 and frame[Dot11].subtype == 11:
@@ -229,14 +263,18 @@ def concurrent_auth_rogue():
                     d_mac in mac_list)) and current_channel != 1:
                 cnt5_auth_seq_rogue += 1
 
-    concurrent_auth_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_auth_rogue_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_auth_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_auth_rogue_callback, store=0,
+                                                 monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_auth_sniffer_rogue.start()
 
+
 concurrent_auth_rogue_thread = Thread(target=concurrent_auth_rogue)
+
 
 def concurrent_association_real():
     # Concurrent association traffic analysis
     global concurrent_association_sniffer_real
+
     def concurrent_association_real_callback(frame):
         global cnt6_assoc_resp_real, cnt6_assoc_resp_rogue
         if frame.haslayer(Dot11) and frame[Dot11].type == 0 and frame[Dot11].subtype == 1:
@@ -249,14 +287,18 @@ def concurrent_association_real():
                     d_mac in mac_list)) and current_channel == 1:
                 cnt6_assoc_resp_real += 1
 
-
-    concurrent_association_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_association_real_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_association_sniffer_real = AsyncSniffer(iface=iface1, count=num,
+                                                       prn=concurrent_association_real_callback, store=0,
+                                                       monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_association_sniffer_real.start()
+
 
 concurrent_association_real_thread = Thread(target=concurrent_association_real)
 
+
 def concurrent_association_rogue():
     global concurrent_association_sniffer_rogue
+
     def concurrent_association_rogue_callback(frame):
         global cnt6_assoc_resp_real, cnt6_assoc_resp_rogue
         if frame.haslayer(Dot11) and frame[Dot11].type == 0 and frame[Dot11].subtype == 1:
@@ -269,16 +311,20 @@ def concurrent_association_rogue():
                     d_mac in mac_list)) and current_channel != 1:
                 cnt6_assoc_resp_rogue += 1
 
-
-    concurrent_association_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_association_rogue_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_association_sniffer_rogue = AsyncSniffer(iface=iface2, count=num,
+                                                        prn=concurrent_association_rogue_callback, store=0,
+                                                        monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_association_sniffer_rogue.start()
 
+
 concurrent_association_rogue_thread = Thread(target=concurrent_association_rogue)
+
 
 # Concurrent eapol traffic analysis
 
 def concurrent_eapol_real():
     global concurrent_eapol_sniffer_real
+
     def concurrent_eapol_real_callback(frame):
         global cnt7_eapol_real, cnt7_eapol_rogue
         if frame.haslayer(EAPOL) and (frame[Dot11].type != 1):
@@ -291,14 +337,17 @@ def concurrent_eapol_real():
                     d_mac in mac_list)) and current_channel == 1:
                 cnt7_eapol_real += 1
 
-
-    concurrent_eapol_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_eapol_real_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_eapol_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_eapol_real_callback, store=0,
+                                                 monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_eapol_sniffer_real.start()
+
 
 concurrent_eapol_real_thread = Thread(target=concurrent_eapol_real)
 
+
 def concurrent_eapol_rogue():
     global concurrent_eapol_sniffer_rogue
+
     def concurrent_eapol_rogue_callback(frame):
         global cnt7_eapol_real, cnt7_eapol_rogue
         if frame.haslayer(EAPOL) and (frame[Dot11].type != 1):
@@ -311,14 +360,18 @@ def concurrent_eapol_rogue():
                     d_mac in mac_list)) and current_channel != 1:
                 cnt7_eapol_rogue += 1
 
-    concurrent_eapol_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_eapol_rogue_callback, store=0, monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
+    concurrent_eapol_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_eapol_rogue_callback, store=0,
+                                                  monitor=True)  # wlan0 on ch 1, wlan1 on ch 11/13
     concurrent_eapol_sniffer_rogue.start()
 
+
 concurrent_eapol_rogue_thread = Thread(target=concurrent_eapol_rogue)
+
 
 # Concurrent data traffic analysis
 def concurrent_data_real():
     global concurrent_data_sniffer_real
+
     def concurrent_data_real_callback(frame):
         global cnt8_data_real, cnt8_data_rogue
         if frame.haslayer(Dot11) and frame[Dot11].subtype == 40:
@@ -331,13 +384,17 @@ def concurrent_data_real():
                     d_mac in mac_list)) and current_channel == 1:
                 cnt8_data_real += 1
 
-    concurrent_data_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_data_real_callback, store=0, monitor=True)  # wlan2 on ch 11, wlan3 on ch 13 (rogue channels)
+    concurrent_data_sniffer_real = AsyncSniffer(iface=iface1, count=num, prn=concurrent_data_real_callback, store=0,
+                                                monitor=True)  # wlan2 on ch 11, wlan3 on ch 13 (rogue channels)
     concurrent_data_sniffer_real.start()
+
 
 concurrent_data_real_thread = Thread(target=concurrent_data_real)
 
+
 def concurrent_data_rogue():
     global concurrent_data_sniffer_rogue
+
     def concurrent_data_rogue_callback(frame):
         global cnt8_data_real, cnt8_data_rogue
         if frame.haslayer(Dot11) and frame[Dot11].subtype == 40:
@@ -349,9 +406,10 @@ def concurrent_data_rogue():
             if bssid == ap_mac and ((s_mac in mac_list) or (d_mac in mac_list) and (current_channel != 1)):
                 cnt8_data_rogue += 1
 
-
-    concurrent_data_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_data_rogue_callback, store=0, monitor=True)  # wlan2 on ch 11, wlan3 on ch 13 (rogue channels)
+    concurrent_data_sniffer_rogue = AsyncSniffer(iface=iface2, count=num, prn=concurrent_data_rogue_callback, store=0,
+                                                 monitor=True)  # wlan2 on ch 11, wlan3 on ch 13 (rogue channels)
     concurrent_data_sniffer_rogue.start()
+
 
 concurrent_data_rogue_thread = Thread(target=concurrent_data_rogue)
 
@@ -378,7 +436,7 @@ logfile.write("\n---------------------------------------------------------")
 logfile.write("\nProbe Interval " + str(instance_num))
 logfile.write("    Started at  " + str(start_datetime))
 print("---------------------------------------------------------")
-#logfile.write("\n---------------------------------------------------------")
+# logfile.write("\n---------------------------------------------------------")
 sleep(thread_sleep_interval)
 
 constant_jamming_thread.join()
@@ -397,7 +455,6 @@ concurrent_eapol_rogue_thread.join()
 concurrent_data_real_thread.join()
 concurrent_data_rogue_thread.join()
 
-
 # set the status of stage 1 traffic
 t.append(0.10)
 t.append(0.10)
@@ -406,12 +463,13 @@ t.pop(0)
 # Calculating FIAT and FDR
 var = statistics.pvariance(t)
 fiat_std = statistics.pstdev(t)
-fdr = (beacon / 200) * 100
+fdr = (beacon / 600) * 100
+mf_rate = (cnt2 / 60) * 100
 
-if fiat_std > 0.5 or fdr > 10:
+if fiat_std > 2 or fdr > 50:
     const_jam_attack = 1
     stage_1_attack_traffic = 1
-if cnt2 > 10:
+if mf_rate < 50:
     react_jam_attack = 1
     stage_1_attack_traffic = 1
 if cnt0 > 1:
@@ -460,30 +518,6 @@ print("Stage 2 attack traffic =", stage_2_attack_traffic)
 logfile.write("\nStage 2 attack traffic:  " + str(stage_2_attack_traffic))
 print("-------------------------------------------------------")
 logfile.write("\n-----------------------------------------------------")
-
-# writing to log file
-# file1.write("\n--------------------------------------------------")
-# file1.write("\n" + str(today))
-# file1.write("\n-------------------------------------------------")
-# file1.write("\n-----------PREDICTED COUNTS STAGE 1 ATTACK TRAFFIC-------------------")
-# file1.write("\nConst Jamming FIAT =" + str(fiat_std))
-# file1.write("\nConst Jamming FDR =" + str(fdr))
-# file1.write("\nMalformed_Beacon_Count =" + str(cnt2))
-# file1.write("\nCSA_Count =" + str(cnt0))
-# file1.write("\n------------PREDICTED STATUS/COUNTS OF STAGE 2 ATTACK TRAFFIC--------")
-# file1.write("\nBeacons on real channel = " + str(bccc))
-# file1.write("\nBeacons on rogue channel= " + str(bcfc))
-# file1.write("\nProbe Response on real channel= " + str(pccc))
-# file1.write("\nProbe Response on rogue channel= " + str(pcfc))
-# file1.write("\nAuth on real channel= " + str(cnt5_auth_seq_real))
-# file1.write("\nAuth on rogue channel= " + str(cnt5_auth_seq_rogue))
-# file1.write("\nAssociation on real channel= " + str(cnt6_assoc_resp_real))
-# file1.write("\nAssociation on rogue channel= " + str(cnt6_assoc_resp_rogue))
-# file1.write("\nEAPOL on real channel= " + str(cnt7_eapol_real))
-# file1.write("\nEAPOL on rogue channel= " + str(cnt7_eapol_rogue))
-# file1.write("\nData on real channel= " + str(cnt7_eapol_real))
-# file1.write("\nData on rogue channel= " + str(cnt7_eapol_rogue))
-# file1.write("\n----------------------------------------------")
 
 print("-Final Decision-")
 logfile.write("\n-Final Decision-")
