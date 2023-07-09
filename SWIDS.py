@@ -185,7 +185,7 @@ display_thread = threading.Thread(target=mainloop)
 # define a thread for scanner_func() and mainloop()
 
 # iface1
-
+print("SWIDS is active.........")
 ifaces = os.listdir('/sys/class/net/')  # get a list of all network interfaces on the machine
 print("Select iface1: ")
 for i in ifaces:
@@ -279,7 +279,7 @@ display_thread.start()
 # start both threads
 print("sleeping fro stgart dellay\n\n\n\n\n\n\n\n")
 sleep(start_delay)
-print("Starting IDS...")
+print("Starting MC-MitM detection...")
 if len(mac_list) == 0:
     print("Couldn't find any clients")
     print("Exiting...")
