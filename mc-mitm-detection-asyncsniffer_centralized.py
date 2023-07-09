@@ -1,4 +1,11 @@
 #!/usr/bin/env python3.9
+
+# Signature-Based-WIDS-for-detecting-MC-MitM-attacks
+# Copyright (c) 2023, Manesh Thankappan<mthankappan@uoc.edu>
+#
+# This code may be distributed under the terms of the BSD license.
+# See README for more details.
+
 import time
 from time import time, sleep
 from threading import *
