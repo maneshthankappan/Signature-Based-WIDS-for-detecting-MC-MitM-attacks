@@ -26,7 +26,14 @@ scapy
 This should start the Scapy interactive shell if the installation was successful.
 
 ## Prerequisite-Attach Wi-Fi adapters
-Attach any two commercially available Wi-Fi adapters. One is used to monitor taget AP;s channel and other is used to observe retransmission of frames (as part of MC-MitM) in any other channels other than AP's channel. We use TP-Link WN722N v3 (High Gain) Wi-Fi adapters for 2.4 Ghz and Wi-Fi Nation for 5GHz channels. Please note that only one frequency can be monitored at a time. Ensure that both Wi-Fi adapters are physically connected to your system before proceeding.
+
+###Our primary considerations in Wi-Fi adapter selection were twofold:
+•	Cost-Effectiveness and Commercial Availability: We aimed to choose Wi-Fi adapters that are affordable and readily accessible in the market.
+•	Support for Monitor Mode in Linux Distributions: We required adapters that could reliably operate in monitor mode across various Linux distributions.
+For monitoring the 2.4 GHz band, our experiments primarily involved the High Gain TP-Link TL-WN722N V3 and the ALFA AWUS036NHA adapters. We observed similar detection performance with both options but ultimately opted for the TL-WN722N V3 due to its commercial availability and cost-effectiveness, typically priced between $10 and $15.
+In the case of monitoring the 5 GHz band, our main contenders were the High Gain Wi-Fi Nation and the Netis WF2180 adapters. We noted approximately 20% higher detection performance with the High Gain Wi-Fi Nation adapter compared to the Netis option. Consequently, we selected the High Gain Wi-Fi Nation adapter for 5 GHz band monitoring. These adapters are commercially available within the price range of $25 to $30.
+We believe that these choices strike a balance between cost-effectiveness and performance, allowing us to effectively monitor both the 2.4 GHz and 5 GHz bands in our experiments. 
+Attach any two commercially available Wi-Fi adapters. One is used to monitor taget AP's channel and other is used to observe retransmission of frames (as part of MC-MitM) in any other channels other than AP's channel. We use TP-Link WN722N v3 (High Gain) Wi-Fi adapters for 2.4 Ghz and Wi-Fi Nation for 5GHz channels. Please note that only one frequency can be monitored at a time. Ensure that both Wi-Fi adapters are physically connected to your system before proceeding.
 
 ## Quick Start
 
